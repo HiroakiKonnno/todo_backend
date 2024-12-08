@@ -1,5 +1,5 @@
 services:
-  backend:
+  todo_backend:
     build:
       context: .
       dockerfile: Dockerfile
@@ -16,9 +16,20 @@ services:
       - "3306:3306" # MySQL のデフォルトポート
     environment:
       MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: db
+      MYSQL_DATABASE: local
+      MYSQL_USER: manager
+      MYSQL_PASSWORD: password
     volumes:
       - db-store:/var/lib/mysql
+  mysqldef:
+    build:
+      context: ./sql/
+      dockerfile: Dockerfile
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_USER=manager
+      - MYSQL_PASSWORD=password
+      - MYSQL_DATABASE=local
 
 volumes:
   db-store:
