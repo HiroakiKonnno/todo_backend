@@ -12,6 +12,7 @@ import (
 )
 func RegisterTaskRoutes(r *gin.Engine, db *gorm.DB) {
 	taskRepo := repository.NewTaskRepository(db)
+	r.GET("/api/helloworld", HelloWorld())
 	r.GET("/api/tasks", GetAllTasks(taskRepo))
 	r.GET("/api/tasks/:id", GetTask(taskRepo))
 	r.POST("/api/tasks", CreateTask(taskRepo))
@@ -110,5 +111,12 @@ func DeleteTask(repo *repository.TaskRepositoryImpl) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, err)
+	}
+}
+func HelloWorld() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{
+			"message": "Hello World!",
+		})
 	}
 }
