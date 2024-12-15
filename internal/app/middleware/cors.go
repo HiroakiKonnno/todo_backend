@@ -18,7 +18,7 @@ func CORSMiddleware() gin.HandlerFunc {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", allowedOrigin) // ここを環境変数から取得
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true") // Cookie や セッションを送信する場合は必須
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(http.StatusNoContent)

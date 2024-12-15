@@ -1,6 +1,7 @@
 package db
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -16,6 +17,10 @@ func Connect() {
 		fmt.Println("No .env file found, using default environment variables")
 	}
 
+	// フラグを定義
+	debug := flag.Bool("debug", false, "デバッグモードを有効にします")
+	flag.Parse()
+
 	// 環境変数の取得
 	user := os.Getenv("DB_USER")
 	password := os.Getenv("DB_PASSWORD")
@@ -25,6 +30,10 @@ func Connect() {
 
 	if user == "" || password == "" || host == "" || port == "" || database == "" {
 		panic("環境変数が不足しています。DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME を確認してください。")
+	}
+
+	if *debug {
+		host = "localhost"
 	}
 
 	// DSNの作成
