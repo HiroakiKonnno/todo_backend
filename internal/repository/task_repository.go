@@ -11,6 +11,7 @@ type TaskRepository interface {
 	GetTask() ([]model.Task, error)
 	CreateTask(task *model.Task) error
 	UpdateTask(task *model.Task) error
+	Delete(task *model.Task) error
 }
 
 type TaskRepositoryImpl struct {
@@ -45,4 +46,7 @@ func (r *TaskRepositoryImpl) UpdateTaskFields(id int, fields map[string]interfac
 	err := r.DB.Model(&model.Task{}).Where("id = ?", id).Updates(fields).Error
 	return err
 }
-
+func (r *TaskRepositoryImpl) DeleteTask(id int) error {
+	err := r.DB.Model(&model.Task{}).Where("id = ?", id).Delete(&model.Task{}).Error
+	return err
+}

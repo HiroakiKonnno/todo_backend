@@ -16,6 +16,7 @@ func RegisterTaskRoutes(r *gin.Engine, db *gorm.DB) {
 	r.GET("/api/tasks/:id", GetTask(taskRepo))
 	r.POST("/api/tasks", CreateTask(taskRepo))
 	r.PATCH("/api/tasks/:id", UpdateTask(taskRepo))
+	r.DELETE("/api/tasks/:id", DeleteTask(taskRepo))
 }
 
 // タスクの一覧を取得する
@@ -90,5 +91,24 @@ func UpdateTask(repo *repository.TaskRepositoryImpl) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, updatedTask)
+	}
+}
+
+// タスクを更新する
+func DeleteTask(repo *repository.TaskRepositoryImpl) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		idParam := ctx.Param("id")
+		id, err := strconv.Atoi(idParam)
+		if err !=nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "IDが無効です"})
+			return
+		}
+
+		if err := repo.DeleteTask(id); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, err)
 	}
 }
