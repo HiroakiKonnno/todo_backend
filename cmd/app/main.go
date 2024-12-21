@@ -14,6 +14,7 @@ func main() {
 	r := gin.New()
 	r.Use(middleware.CORSMiddleware())    
 	handler.RegisterTaskRoutes(r, db.DB)
+	handler.RegisterAuthentificationRoutes(r, db.DB)
 
 	port := "8080"
 	fmt.Printf("サーバーがポート %s で起動中...\n", port)
