@@ -23,8 +23,8 @@ func (r *UserRepositoryImpl) CreateUser(user *model.User) error {
 	return err
 }
 
-func (r *UserRepositoryImpl) FindByUserId(LoginId string) error {
+func (r *UserRepositoryImpl) FindByUserId(LoginId string) (model.User, error) {
 	var user model.User
 	err := r.DB.Where("login_id = ?", LoginId).First(&user).Error
-	return err
+	return user, err
 }

@@ -22,6 +22,7 @@ type JsonRequest struct {
 func RegisterAuthentificationRoutes(r *gin.Engine, db *gorm.DB) {
 	userRepo := repository.NewUserRepository(db)
 	r.POST("/api/signup", CreateUser(userRepo))
+	r.POST("/api/signin", SignInUser(userRepo))
 }
 
 // ユーザを作成する
@@ -35,7 +36,7 @@ func CreateUser(repo *repository.UserRepositoryImpl) gin.HandlerFunc {
 		return
 		}
 
-		err := repo.FindByUserId(json.LoginId)
+		_, err := repo.FindByUserId(json.LoginId)
 
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			ctx.JSON(http.StatusBadRequest, gin.H{
@@ -62,5 +63,38 @@ func CreateUser(repo *repository.UserRepositoryImpl) gin.HandlerFunc {
 	}
 		ctx.JSON(http.StatusCreated, user)
 	}
+}
+
+func SignInUser(repo *repository.UserRepositoryImpl) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var json JsonRequest
+		if err := ctx.ShouldBindJSON(&json); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+					"error" : err.Error(),
+			})
+			return
+		}
+
+		user, err := repo.FindByUserId(json.LoginId)
+
+		if errors.Is(err, gorm.ErrRecordNotFound)  {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+					"message" : "ユーザーが存在しません。",
+			})
+			return
+		}
+
+		err_pw := crypto.CompareHashAndPassword(user.Password, json.Password)
+		if err_pw != nil {
+			ctx.JSON(http.StatusUnauthorized, gin.H{
+					"message" : "パスワードが一致しません。",
+			})
+			return
+		}
+		ctx.JSON(http.StatusOK, gin.H{
+			"message" : "ログイン成功",
+		})
+	}
+
 }
 
