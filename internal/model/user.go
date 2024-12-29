@@ -10,3 +10,9 @@ type User struct {
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }
+
+type PublicUser struct {
+	Id int `gorm:"primaryKey;autoIncrement" json:"id"`
+	Name   string `gorm:"type:varchar(255);not null;" json:"name"`
+	LoginId   string `gorm:"type:varchar(255);not null;uniqueIndex:unique_login_id" json:"login_id"`
+}

@@ -61,7 +61,11 @@ func CreateUser(repo *repository.UserRepositoryImpl) gin.HandlerFunc {
 			})
 			return
 	}
-		ctx.JSON(http.StatusCreated, user)
+		ctx.JSON(http.StatusCreated, model.PublicUser{
+			Id: user.Id,
+			Name: user.Name,
+			LoginId: user.LoginId,
+		})
 	}
 }
 
@@ -93,6 +97,11 @@ func SignInUser(repo *repository.UserRepositoryImpl) gin.HandlerFunc {
 		}
 		ctx.JSON(http.StatusOK, gin.H{
 			"message" : "ログイン成功",
+			"user" : model.PublicUser{
+				Id: user.Id,
+				Name: user.Name,
+				LoginId: user.LoginId,
+			},
 		})
 	}
 
