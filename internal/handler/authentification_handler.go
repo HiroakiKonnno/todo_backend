@@ -8,6 +8,8 @@ import (
 	"todo_backend/internal/model"
 	"todo_backend/internal/repository"
 
+	auth "todo_backend/internal/auth"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -19,7 +21,7 @@ type JsonRequest struct {
 }
 
 
-func RegisterAuthentificationRoutes(r *gin.Engine, db *gorm.DB) {
+func RegisterAuthentificationRoutes(r *gin.RouterGroup, db *gorm.DB) {
 	userRepo := repository.NewUserRepository(db)
 	r.POST("/api/signup", CreateUser(userRepo))
 	r.POST("/api/signin", SignInUser(userRepo))
@@ -95,6 +97,23 @@ func SignInUser(repo *repository.UserRepositoryImpl) gin.HandlerFunc {
 			})
 			return
 		}
+
+		token, err := auth.GenerateJWT(user.Id, user.LoginId)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+			return
+		}
+
+		ctx.SetCookie(
+			"jwt",       // Cookie名
+			token,       // トークンの値
+			3600*24,     // 有効期限（秒）
+			"/",         // パス
+			"",          // ドメイン（空の場合、現在のドメイン）
+			false,       // Secure（HTTPSのみの場合はtrue）
+			true,        // HttpOnly（JavaScriptからアクセス不可）
+		)
+
 		ctx.JSON(http.StatusOK, gin.H{
 			"message" : "ログイン成功",
 			"user" : model.PublicUser{

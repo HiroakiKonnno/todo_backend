@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
-func RegisterTaskRoutes(r *gin.Engine, db *gorm.DB) {
+func RegisterTaskRoutes(r *gin.RouterGroup, db *gorm.DB) {
 	taskRepo := repository.NewTaskRepository(db)
 	r.GET("/api/helloworld", HelloWorld())
 	r.GET("/api/tasks", GetAllTasks(taskRepo))
