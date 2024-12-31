@@ -25,6 +25,7 @@ func RegisterAuthentificationRoutes(r *gin.RouterGroup, db *gorm.DB) {
 	userRepo := repository.NewUserRepository(db)
 	r.POST("/api/signup", CreateUser(userRepo))
 	r.POST("/api/signin", SignInUser(userRepo))
+	r.GET("/api/me", GetCurrentUser(userRepo))
 }
 
 // ユーザを作成する
@@ -124,5 +125,30 @@ func SignInUser(repo *repository.UserRepositoryImpl) gin.HandlerFunc {
 		})
 	}
 
+}
+
+func GetCurrentUser(repo *repository.UserRepositoryImpl) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		claims, ok := auth.ExtractAndVerifyToken(ctx)
+		if !ok {
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
+		}
+		loginId := claims["loginId"].(string)
+
+		user, err := repo.FindByUserId(loginId)
+
+		if errors.Is(err, gorm.ErrRecordNotFound)  {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+					"message" : "ユーザーが存在しません。",
+			})
+			return
+		}
+		ctx.JSON(http.StatusCreated, model.PublicUser{
+			Id: user.Id,
+			Name: user.Name,
+			LoginId: user.LoginId,
+		})
+	}
 }
 

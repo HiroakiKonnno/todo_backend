@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 
 	"time"
@@ -28,4 +30,35 @@ func ValidateJWT(tokenString string) (*jwt.Token, error) {
 		}
 		return jwtKey , nil
 	})
+}
+
+func ExtractAndVerifyToken(ctx *gin.Context) (map[string]interface{}, bool) {
+	tokenString, err := ctx.Cookie("jwt")
+	if err != nil {
+		return nil, false
+	}
+	claims, err := parseAndValidateToken(tokenString)
+	if err != nil {
+		return nil, false
+	}
+	return claims, true
+}
+
+func parseAndValidateToken(tokenString string) (map[string]interface{}, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
+		return jwtKey, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return nil, errors.New("invalid token")
+	}
+
+	return claims, nil
 }
