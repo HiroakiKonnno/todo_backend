@@ -25,6 +25,7 @@ func RegisterAuthentificationRoutes(r *gin.RouterGroup, db *gorm.DB) {
 	userRepo := repository.NewUserRepository(db)
 	r.POST("/api/signup", CreateUser(userRepo))
 	r.POST("/api/signin", SignInUser(userRepo))
+	r.POST("/api/signout", SignOutUser(userRepo))
 	r.GET("/api/me", GetCurrentUser(userRepo))
 }
 
@@ -125,6 +126,25 @@ func SignInUser(repo *repository.UserRepositoryImpl) gin.HandlerFunc {
 		})
 	}
 
+}
+
+func SignOutUser(repo *repository.UserRepositoryImpl) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		ctx.SetCookie(
+			"jwt",       // Cookie名
+			"",          // 空の値を設定
+			-1,          // 有効期限を過去にする
+			"/",         // パス
+			"",          // ドメイン（空の場合、現在のドメイン）
+			false,       // Secure（HTTPSのみの場合はtrue）
+			true,        // HttpOnly（JavaScriptからアクセス不可）
+		)
+	
+		// レスポンスを返す
+		ctx.JSON(200, gin.H{
+			"message": "Logged out successfully",
+		})
+	}
 }
 
 func GetCurrentUser(repo *repository.UserRepositoryImpl) gin.HandlerFunc {
