@@ -58,6 +58,9 @@ func CreateTask(repo *repository.TaskRepositoryImpl) gin.HandlerFunc {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		if err := task.Validate(); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Validation failed", "details": err.Error()})
+		}
 		err := repo.CreateTask(&task)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
