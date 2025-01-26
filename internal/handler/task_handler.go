@@ -7,6 +7,12 @@ import (
 	"todo_backend/internal/model"
 	"todo_backend/internal/repository"
 
+	"os"
+
+	"encoding/csv"
+
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -18,6 +24,7 @@ func RegisterTaskRoutes(r *gin.RouterGroup, db *gorm.DB) {
 	r.POST("/api/tasks", CreateTask(taskRepo))
 	r.PATCH("/api/tasks/:id", UpdateTask(taskRepo))
 	r.DELETE("/api/tasks/:id", DeleteTask(taskRepo))
+	r.POST("/api/tasks/export", exportCSV(taskRepo))
 }
 
 // タスクの一覧を取得する
@@ -117,6 +124,50 @@ func DeleteTask(repo *repository.TaskRepositoryImpl) gin.HandlerFunc {
 		ctx.JSON(http.StatusOK, err)
 	}
 }
+
+func exportCSV(repo *repository.TaskRepositoryImpl) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		go func() {
+			file, err := os.Create("task.csv")
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			tasks, err := repo.GetAllTasks()
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+
+			data := [][]string{
+				{"ID", "Title", "Content", "StartDate", "EndDate"},
+			}
+
+			for _, task := range tasks {
+				data = append(data, []string{
+					strconv.Itoa(task.ID),
+					task.Title,
+					task.Content,
+					task.StartDate.Format(time.RFC3339),
+					task.EndDate.Format(time.RFC3339),
+				})
+			}
+			
+			defer file.Close()
+			w := csv.NewWriter(file)
+
+			defer w.Flush()
+			for _, record := range data {
+				if err := w.Write(record); err != nil {
+					ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+					return
+				}
+			}
+		}()
+		ctx.File("task.csv")
+	}
+}
+
 func HelloWorld() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
