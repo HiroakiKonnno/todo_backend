@@ -28,6 +28,14 @@ func (ct *CustomTime) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+func ConvertToRFC3339(dateStr string) (time.Time, error) {
+	parsedTime, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return parsedTime, nil
+}
+
 // JSON用のMarshal
 func (ct CustomTime) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + ct.Time.Format(customTimeFormat) + `"`), nil

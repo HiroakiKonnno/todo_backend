@@ -3,6 +3,8 @@ package repository
 import (
 	"todo_backend/internal/model"
 
+	"time"
+
 	"gorm.io/gorm"
 )
 
@@ -22,9 +24,18 @@ func NewTaskRepository(db *gorm.DB) *TaskRepositoryImpl {
 	return &TaskRepositoryImpl{DB: db}
 }
 
-func (r *TaskRepositoryImpl) GetAllTasks() ([]model.Task, error) {
+func (r *TaskRepositoryImpl) GetAllTasks(start_date *time.Time, end_date *time.Time) ([]model.Task, error) {
+	query := r.DB
+	
+	if start_date != nil {
+		query = query.Where("start_date >= ?", *start_date)
+	}
+	if end_date != nil {
+		query = query.Where("end_date <= ?", *end_date)
+	}
+
 	var tasks []model.Task
-	err := r.DB.Find(&tasks).Error
+	err := query.Find(&tasks).Error
 	return tasks, err
 }
 

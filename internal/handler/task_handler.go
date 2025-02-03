@@ -30,7 +30,30 @@ func RegisterTaskRoutes(r *gin.RouterGroup, db *gorm.DB) {
 // タスクの一覧を取得する
 func GetAllTasks(repo *repository.TaskRepositoryImpl) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		tasks, err := repo.GetAllTasks()
+		startDateStr := ctx.Param("start_date")
+		endDateStr := ctx.Param("end_date")
+
+		var startDate, endDate *time.Time
+
+		if startDateStr != "" {
+			parsedStartDate, err := model.ConvertToRFC3339(startDateStr)
+			if err != nil {
+				ctx.JSON(http.StatusBadRequest, gin.H{"error": "無効な開始日です"})
+				return
+			}
+			startDate = &parsedStartDate // ポインタに格納
+		}
+		
+		if endDateStr != "" {
+			parsedEndDate, err := model.ConvertToRFC3339(endDateStr)
+			if err != nil {
+				ctx.JSON(http.StatusBadRequest, gin.H{"error": "無効な終了日です"})
+				return
+			}
+			endDate = &parsedEndDate // ポインタに格納
+		}
+
+		tasks, err := repo.GetAllTasks(startDate, endDate)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -127,13 +150,37 @@ func DeleteTask(repo *repository.TaskRepositoryImpl) gin.HandlerFunc {
 
 func exportCSV(repo *repository.TaskRepositoryImpl) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		startDateStr := ctx.Param("start_date")
+		endDateStr := ctx.Param("end_date")
+
+		var startDate, endDate *time.Time
+
+		if startDateStr != "" {
+			parsedStartDate, err := model.ConvertToRFC3339(startDateStr)
+			if err != nil {
+				ctx.JSON(http.StatusBadRequest, gin.H{"error": "無効な開始日です"})
+				return
+			}
+			startDate = &parsedStartDate // ポインタに格納
+		}
+		
+		if endDateStr != "" {
+			parsedEndDate, err := model.ConvertToRFC3339(endDateStr)
+			if err != nil {
+				ctx.JSON(http.StatusBadRequest, gin.H{"error": "無効な終了日です"})
+				return
+			}
+			endDate = &parsedEndDate // ポインタに格納
+		}
+
+
 		go func() {
 			file, err := os.Create("task.csv")
 			if err != nil {
 				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
-			tasks, err := repo.GetAllTasks()
+			tasks, err := repo.GetAllTasks(startDate, endDate)
 			if err != nil {
 				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
