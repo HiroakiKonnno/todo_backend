@@ -65,6 +65,22 @@ func CreateUser(repo *repository.UserRepositoryImpl) gin.HandlerFunc {
 			})
 			return
 	}
+		token, err := auth.GenerateJWT(user.Id, user.LoginId)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+				return
+			}
+			
+		ctx.SetCookie(
+			"jwt",       // Cookie名
+			token,       // トークンの値
+			3600*24,     // 有効期限（秒）
+			"/",         // パス
+			"",          // ドメイン（空の場合、現在のドメイン）
+			false,       // Secure（HTTPSのみの場合はtrue）
+			true,        // HttpOnly（JavaScriptからアクセス不可）
+		)
+
 		ctx.JSON(http.StatusCreated, model.PublicUser{
 			Id: user.Id,
 			Name: user.Name,
