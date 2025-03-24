@@ -6,15 +6,19 @@ import (
 	"os"
 
 	"github.com/joho/godotenv" // godotenvライブラリを使う
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
 func Connect() {
-	if err := godotenv.Load(); err != nil {
-		fmt.Println("No .env file found, using default environment variables")
+	env := os.Getenv("GO_ENV")
+
+	if env != "prd" {
+		if err := godotenv.Load(); err != nil {
+			fmt.Println("No .env file found, using default environment variables")
+		}
 	}
 
 	// フラグを定義
@@ -37,16 +41,14 @@ func Connect() {
 	}
 
 	// DSNの作成
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", 
-		user, 
-		password, 
-		host, 
-		port, 
-		database,
+	dsn := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=require",
+		host, user, password, database, port,
 	)
 
+
 	var err error
-	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(fmt.Sprintf("Failed to connect to the database: %v", err))
 	}

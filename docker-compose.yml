@@ -11,25 +11,24 @@ services:
       - db
     command: ["go", "run", "./cmd/app/main.go"]
   db:
-    image: mysql:8.0
+    image: postgres:16.4
     ports:
-      - "3306:3306" # MySQL のデフォルトポート
+      - "5432:5432"
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: local
-      MYSQL_USER: manager
-      MYSQL_PASSWORD: password
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: local
+      POSTGRES_USER: manager
     volumes:
-      - db-store:/var/lib/mysql
-  mysqldef:
+      - db-store:/var/lib/postgres
+  postgresdef:
     build:
       context: ./sql/
       dockerfile: Dockerfile
     environment:
-      - MYSQL_HOST=db
-      - MYSQL_USER=manager
-      - MYSQL_PASSWORD=password
-      - MYSQL_DATABASE=local
+      - POSTGRES_HOST=db
+      - POSTGRES_USER=manager
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DATABASE=local
 
 volumes:
   db-store:
