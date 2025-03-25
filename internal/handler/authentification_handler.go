@@ -71,15 +71,15 @@ func CreateUser(repo *repository.UserRepositoryImpl) gin.HandlerFunc {
 				return
 			}
 			
-		ctx.SetCookie(
-			"jwt",       // Cookie名
-			token,       // トークンの値
-			3600*24,     // 有効期限（秒）
-			"/",         // パス
-			"",          // ドメイン（空の場合、現在のドメイン）
-			false,       // Secure（HTTPSのみの場合はtrue）
-			true,        // HttpOnly（JavaScriptからアクセス不可）
-		)
+		http.SetCookie(ctx.Writer, &http.Cookie{
+			Name:     "jwt",
+			Value:    token,
+			Path:     "/",
+			MaxAge:   3600 * 24,
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteNoneMode, // ← これが重要
+		})
 
 		ctx.JSON(http.StatusCreated, model.PublicUser{
 			Id: user.Id,
@@ -122,15 +122,15 @@ func SignInUser(repo *repository.UserRepositoryImpl) gin.HandlerFunc {
 			return
 		}
 
-		ctx.SetCookie(
-			"jwt",       // Cookie名
-			token,       // トークンの値
-			3600*24,     // 有効期限（秒）
-			"/",         // パス
-			"",          // ドメイン（空の場合、現在のドメイン）
-			false,       // Secure（HTTPSのみの場合はtrue）
-			true,        // HttpOnly（JavaScriptからアクセス不可）
-		)
+		http.SetCookie(ctx.Writer, &http.Cookie{
+			Name:     "jwt",
+			Value:    token,
+			Path:     "/",
+			MaxAge:   3600 * 24,
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteNoneMode,
+		})
 
 		ctx.JSON(http.StatusOK, gin.H{
 			"message" : "ログイン成功",
@@ -146,15 +146,15 @@ func SignInUser(repo *repository.UserRepositoryImpl) gin.HandlerFunc {
 
 func SignOutUser(repo *repository.UserRepositoryImpl) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		ctx.SetCookie(
-			"jwt",       // Cookie名
-			"",          // 空の値を設定
-			-1,          // 有効期限を過去にする
-			"/",         // パス
-			"",          // ドメイン（空の場合、現在のドメイン）
-			false,       // Secure（HTTPSのみの場合はtrue）
-			true,        // HttpOnly（JavaScriptからアクセス不可）
-		)
+		http.SetCookie(ctx.Writer, &http.Cookie{
+			Name:     "jwt",
+			Value:    "",
+			Path:     "/",
+			MaxAge:   -1,
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteNoneMode, // ← これが重要
+		})
 	
 		// レスポンスを返す
 		ctx.JSON(200, gin.H{
