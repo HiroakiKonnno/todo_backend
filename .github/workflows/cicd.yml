@@ -1,0 +1,67 @@
+name: CI/CD
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - uses: actions/setup-go@v3
+        with:
+          go-version: "1.23.4"
+
+      - name: Cache Go modules
+        id: cache-go
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download Go modules
+        shell: bash
+        if: ${{ steps.cache-go.outputs.cache-hit != 'true' }}
+        run: |
+          go mod download
+
+      - name: Run Go tests
+        run: go test ./...
+
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: go-todo-453908
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker us-west1-docker.pkg.dev --quiet
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t us-west1-docker.pkg.dev/go-todo-453908/go-api/todo-api:$GITHUB_SHA .
+          docker push us-west1-docker.pkg.dev/go-todo-453908/go-api/todo-api:$GITHUB_SHA
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy todo-api \
+            --image=us-west1-docker.pkg.dev/go-todo-453908/go-api/todo-api:$GITHUB_SHA \
+            --region=us-west1 \
+            --platform=managed \
+            --allow-unauthenticated \
+            --set-secrets DB_HOST=DB_HOST:latest,DB_NAME=DB_NAME:latest,DB_PASSWORD=DB_PASSWORD:latest,DB_PORT=DB_PORT:latest,DB_USER=DB_USER:latest,GO_ENV=GO_ENV:latest
